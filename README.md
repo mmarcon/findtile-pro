@@ -1,4 +1,4 @@
-# Find your Tile
+# Find your Tile *PRO*
 **Find your Tile** shows how the cool features offered by HTML5 and related standard can be leveraged to develop simple gaming experiences for the users.
 
 ## The game
@@ -7,6 +7,9 @@ In **Find your Tile** 3 map tiles (satellite view) are shown to the user. One of
 The player has to pick the tile she thinks corresponds to her location. If the answer is wrong then the game provides a link to the Wikipedia page corresponding to the city that was mistakenly selected.
 
 ![image](https://raw.github.com/mmarcon/findtile/master/doc/wrong.png)
+
+## The *PRO* Version
+With this **PRO** version I want to explore the [Firebase API](http://www.firebase.com/) as a data store where to save scores and leaderboard.
 
 ## Geeky info
 The little game uses the location API (which is **not part of the HTML5 standard**) to determine the user's geolocation.
