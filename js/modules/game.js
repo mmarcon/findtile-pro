@@ -14,7 +14,7 @@
  * limitations under the License.
  */
  
-define(function(){
+define(['modules/store', 'modules/nokiamaps'], function(store, nokiamaps){
     'use strict';
 
     Array.prototype.randomElement = Array.prototype.randomElement || function(){
@@ -25,12 +25,7 @@ define(function(){
     };
 
     var doc = document,
-        init, locationFound, locationNotFound, cities, attachEventHandlers, warnOnReload = false,
-        API = {
-            id: 'C2Cse_31xwvbccaAIAaP',
-            token: 'fjFdGyRjstwqr9iJxLwQ-g',
-            baseURL: 'http://m.nok.it/?app_id={ID}&token={TOKEN}&c={LAT},{LON}&nord&nodot&t=1&h=200&w=200&z={ZOOM}'
-        },
+        init, locationFound, locationNotFound, cities, attachEventHandlers,
         overlay = doc.querySelector('.overlay'),
         answers = {},
         text = {
@@ -39,6 +34,36 @@ define(function(){
                    'That one is ${CITY}, and you can learn more about it ' +
                    '<a href="http://en.wikipedia.com/wiki/${W_CITY}" target="_blank">on Wikipedia</a>.'
         };
+
+    var LevelHelper = {
+        makeLevel: function(cities){
+            var level = {};
+            cities.shuffle();
+            level.t0 = cities.randomElement();
+            cities.shuffle();
+            level.t1 = cities.randomElement();
+            cities.shuffle();
+            level.t2 = cities.randomElement();
+            return level;
+        },
+        makeFirstLevel: function(cities, here){
+            var level = {};
+            level.t0 = {
+                lat: here.lat,
+                lon: here.lon
+            };
+            cities.shuffle();
+            level.t1 = cities.randomElement();
+            cities.shuffle();
+            level.t2 = cities.randomElement();
+            return level;
+        },
+        makeURLMaker: function(zoom){
+            return function(city){
+                return nokiamaps.getTileUrl(city.lat, city.lon, zoom);
+            };
+        }
+    };
 
     init = function(){
         //app lives here
@@ -55,64 +80,34 @@ define(function(){
         var lat = position.coords.latitude,
             lon = position.coords.longitude,
             img = [],
-            url = API.baseURL.replace('{ID}', API.id).replace('{TOKEN}', API.token),
-            req, zoom = Math.max(9, Math.floor(Math.random() * 14));
+            URLMaker = LevelHelper.makeURLMaker(Math.max(9, Math.floor(Math.random() * 14)));
 
-        //Get map tiles
-        img.push(url.replace('{LAT}', lat).replace('{LON}', lon).replace('{ZOOM}', zoom));
+        store.done(function(cities){
+            var rurl, el, level = LevelHelper.makeFirstLevel(cities, {lat: lat, lon: lon});
 
-        req = new XMLHttpRequest();
-        req.open('GET', 'data/cities.json', true);
-        req.onreadystatechange = function (aEvt) {
-            var city, rurl, el;
-            if (req.readyState == 4) {
-                if(req.status == 200) {
-                    cities = JSON.parse(req.responseText);
-                    cities.shuffle();
-                    city = cities.randomElement();
-                    //console.log(city);
-                    rurl = url.replace('{LAT}', city.lat).replace('{LON}', city.lon).replace('{ZOOM}', zoom);
-                    img.push(rurl);
-                    answers[rurl] = city;
-                    cities.shuffle();
-                    city = cities.randomElement();
-                    //console.log(city);
-                    rurl = url.replace('{LAT}', city.lat).replace('{LON}', city.lon).replace('{ZOOM}', zoom);
-                    img.push(rurl);
-                    answers[rurl] = city;
+            rurl = URLMaker(level.t0);
+            img.push(rurl);
+            answers.correct = rurl;
+            rurl = URLMaker(level.t1);
+            img.push(rurl);
+            answers[rurl] = level.t1;
+            rurl = URLMaker(level.t2);
+            img.push(rurl);
+            answers[rurl] = level.t2;
 
-                    answers.correct = img[0];
-                    img.shuffle();
-                    img.forEach(function(image, index){
-                        el = doc.createElement('img');
-                        el.width = 200;
-                        el.height = 200;
-                        el.src = image;
-                        el.onload = function(){
-                            this.style.display = 'block';
-                            this.parentNode.classList.add('back');
-                        };
-                        doc.querySelector('.tile' + (index + 1)).appendChild(el);
-                    });
-
-                    if (warnOnReload) {
-                        if (localStorage.getItem('findtile')) {
-                            overlay.style.display = 'block';
-                            doc.querySelector('.error.cheating').style.display = 'block';
-                        }
-                        else {
-                            //for cheaters
-                            localStorage.setItem('findtile', true);
-                        }
-                    }
-                }
-                else {
-                    overlay.style.display = 'block';
-                    doc.querySelector('.error.nodata').style.display = 'block';
-                }
-            }
-        };
-        req.send(null);
+            img.shuffle();
+            img.forEach(function(image, index){
+                el = doc.createElement('img');
+                el.width = 200;
+                el.height = 200;
+                el.src = image;
+                el.onload = function(){
+                    this.style.display = 'block';
+                    this.parentNode.classList.add('back');
+                };
+                doc.querySelector('.tile' + (index + 1)).appendChild(el);
+            });
+        });
     };
 
     locationNotFound = function(){
