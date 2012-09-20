@@ -16,7 +16,7 @@
 
 define(['modules/cookies', 'firebase'], function(cookies){
     'use strict';
-    
+
     var User, U,
         _generateID;
 
@@ -46,6 +46,11 @@ define(['modules/cookies', 'firebase'], function(cookies){
 
     U.setName = function(name, callback){
         this.firebaseRef.child('name').set(name, callback);
+    };
+
+    U.resetScore = function(callback){
+        this.data.score = 0;
+        this.firebaseRef.child('score').set(this.data.score, callback);
     };
 
     U.incrementScore = function(callback){
