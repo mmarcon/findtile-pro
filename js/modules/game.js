@@ -26,8 +26,8 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(stor
 
     var doc = document,
         init, locationFound, locationNotFound, cities, attachEventHandlers, loadNextLevel,
-        overlay = doc.querySelector('.overlay'),
-        answers = {},
+        layDownLevel, overlay = doc.querySelector('.overlay'),
+        answers,
         text = {
             correct: 'Well done, that is indeed your location!',
             wrong: 'Nope! Unfortunately you picked the wrong one. ' +
@@ -78,37 +78,41 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(stor
 
     locationFound = function(position){
         var lat = position.coords.latitude,
-            lon = position.coords.longitude,
-            img = [],
-            URLMaker = LevelHelper.makeURLMaker(Math.max(9, Math.floor(Math.random() * 14)));
+            lon = position.coords.longitude;
 
         store.done(function(cities){
-            var rurl, el, level = LevelHelper.makeFirstLevel(cities, {lat: lat, lon: lon});
-
+            var level = LevelHelper.makeFirstLevel(cities, {lat: lat, lon: lon});
             cityArray = cities;
+            layDownLevel(level);
+        });
+    };
 
-            rurl = URLMaker(level.t0);
-            img.push(rurl);
-            answers.correct = rurl;
-            rurl = URLMaker(level.t1);
-            img.push(rurl);
-            answers[rurl] = level.t1;
-            rurl = URLMaker(level.t2);
-            img.push(rurl);
-            answers[rurl] = level.t2;
+    layDownLevel = function(level){
+        var rurl, el, img = [], URLMaker = LevelHelper.makeURLMaker(Math.max(9, Math.floor(Math.random() * 14)));
+        
+        answers = {};
 
-            img.shuffle();
-            img.forEach(function(image, index){
-                el = doc.createElement('img');
-                el.width = 200;
-                el.height = 200;
-                el.src = image;
-                el.onload = function(){
-                    this.style.display = 'block';
-                    this.parentNode.classList.add('back');
-                };
-                doc.querySelector('.tile' + (index + 1)).appendChild(el);
-            });
+        rurl = URLMaker(level.t0);
+        img.push(rurl);
+        answers.correct = rurl;
+        rurl = URLMaker(level.t1);
+        img.push(rurl);
+        answers[rurl] = level.t1;
+        rurl = URLMaker(level.t2);
+        img.push(rurl);
+        answers[rurl] = level.t2;
+
+        img.shuffle();
+        img.forEach(function(image, index){
+            el = doc.createElement('img');
+            el.width = 200;
+            el.height = 200;
+            el.src = image;
+            el.onload = function(){
+                this.style.display = 'block';
+                this.parentNode.classList.add('back');
+            };
+            doc.querySelector('.tile' + (index + 1)).appendChild(el);
         });
     };
 
@@ -118,16 +122,27 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(stor
     };
 
     loadNextLevel = function(){
-        var level = LevelHelper.makeLevel(cityArray), ol;
+        var level = LevelHelper.makeLevel(cityArray), ol, count = 3, listener;
         //Remove current level
         //1- fade out. Transition should be handled by CSS
         ol = doc.querySelector('ol');
-        ol.addEventListener(prefixer.ontransitionend, function(e){
-            while(ol.hasChildNodes()){
-                ol.removeChild(ol.lastChild);
+        listener = function(e){
+            var t = e.target;
+            if(t.tagName.match(/li/i)) {
+                t.classList.remove('correct');
+                t.classList.remove('wrong');
+                t.innerHTML = '';
+                if(--count === 0) {
+                    layDownLevel(level);
+                    ol.removeEventListener(prefixer.ontransitionend, listener, true);
+                }
             }
+        };
+        ol.addEventListener(prefixer.ontransitionend, listener, true);
+
+        [].forEach.call(ol.children, function(li){
+            li.classList.remove('back');
         });
-        ol.style.opacity = 0;
     };
 
     attachEventHandlers = function(){
