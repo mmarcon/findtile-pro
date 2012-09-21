@@ -14,7 +14,7 @@
  * limitations under the License.
  */
  
-define(['modules/store', 'modules/nokiamaps'], function(store, nokiamaps){
+define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(store, nokiamaps, prefixer){
     'use strict';
 
     Array.prototype.randomElement = Array.prototype.randomElement || function(){
@@ -25,7 +25,7 @@ define(['modules/store', 'modules/nokiamaps'], function(store, nokiamaps){
     };
 
     var doc = document,
-        init, locationFound, locationNotFound, cities, attachEventHandlers,
+        init, locationFound, locationNotFound, cities, attachEventHandlers, loadNextLevel,
         overlay = doc.querySelector('.overlay'),
         answers = {},
         text = {
@@ -33,7 +33,7 @@ define(['modules/store', 'modules/nokiamaps'], function(store, nokiamaps){
             wrong: 'Nope! Unfortunately you picked the wrong one. ' +
                    'That one is ${CITY}, and you can learn more about it ' +
                    '<a href="http://en.wikipedia.com/wiki/${W_CITY}" target="_blank">on Wikipedia</a>.'
-        };
+        }, cityArray;
 
     var LevelHelper = {
         makeLevel: function(cities){
@@ -85,6 +85,8 @@ define(['modules/store', 'modules/nokiamaps'], function(store, nokiamaps){
         store.done(function(cities){
             var rurl, el, level = LevelHelper.makeFirstLevel(cities, {lat: lat, lon: lon});
 
+            cityArray = cities;
+
             rurl = URLMaker(level.t0);
             img.push(rurl);
             answers.correct = rurl;
@@ -115,6 +117,19 @@ define(['modules/store', 'modules/nokiamaps'], function(store, nokiamaps){
         doc.querySelector('.error.nolocation').style.display = 'block';
     };
 
+    loadNextLevel = function(){
+        var level = LevelHelper.makeLevel(cityArray), ol;
+        //Remove current level
+        //1- fade out. Transition should be handled by CSS
+        ol = doc.querySelector('ol');
+        ol.addEventListener(prefixer.ontransitionend, function(e){
+            while(ol.hasChildNodes()){
+                ol.removeChild(ol.lastChild);
+            }
+        });
+        ol.style.opacity = 0;
+    };
+
     attachEventHandlers = function(){
         [].forEach.call(doc.querySelectorAll('.error span'), function(e){
             e.addEventListener('click', function(){
@@ -135,6 +150,7 @@ define(['modules/store', 'modules/nokiamaps'], function(store, nokiamaps){
                     result.classList.remove('wrong');
                     result.classList.add('correct');
                     result.innerHTML = text.correct;
+                    setTimeout(loadNextLevel, 2000);
                 }
                 else {
                     this.classList.add('wrong');

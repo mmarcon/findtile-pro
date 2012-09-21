@@ -112,6 +112,11 @@ ol {
     list-style-type: none;
     text-align: center;
     perspective: 1000px;
+
+    -webkit-transition: all 1.0s ease;
+    -moz-transition: all 1.0s ease;
+    -ms-transition: all 1.0s ease;
+    transition: all 1.0s ease;
 }
 
 ol li {
