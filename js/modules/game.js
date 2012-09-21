@@ -29,11 +29,11 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(stor
         layDownLevel, overlay = doc.querySelector('.overlay'),
         answers,
         text = {
-            correct: 'Well done, that is indeed your location!',
+            correct: 'Well done, that is indeed correct!',
             wrong: 'Nope! Unfortunately you picked the wrong one. ' +
                    'That one is ${CITY}, and you can learn more about it ' +
                    '<a href="http://en.wikipedia.com/wiki/${W_CITY}" target="_blank">on Wikipedia</a>.'
-        }, cityArray;
+        }, cityArray, levelNumber = 1;
 
     var LevelHelper = {
         makeLevel: function(cities){
@@ -88,13 +88,15 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(stor
     };
 
     layDownLevel = function(level){
-        var rurl, el, img = [], URLMaker = LevelHelper.makeURLMaker(Math.max(9, Math.floor(Math.random() * 14)));
+        var rurl, el, img = [], URLMaker = LevelHelper.makeURLMaker(Math.max(9, Math.floor(Math.random() * 14))), li;
         
         answers = {};
 
         rurl = URLMaker(level.t0);
         img.push(rurl);
         answers.correct = rurl;
+        doc.querySelector('.where').innerHTML = level.t0.city || 'your current location';
+        doc.querySelector('.level-number').innerHTML = levelNumber;
         rurl = URLMaker(level.t1);
         img.push(rurl);
         answers[rurl] = level.t1;
@@ -112,7 +114,10 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(stor
                 this.style.display = 'block';
                 this.parentNode.classList.add('back');
             };
-            doc.querySelector('.tile' + (index + 1)).appendChild(el);
+            li = doc.querySelector('.tile' + (index + 1));
+            //Seems more reliable to do this here.
+            li.innerHTML = null;
+            li.appendChild(el);
         });
     };
 
@@ -122,18 +127,16 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(stor
     };
 
     loadNextLevel = function(){
-        var level = LevelHelper.makeLevel(cityArray), ol, count = 3, listener;
-        //Remove current level
-        //1- fade out. Transition should be handled by CSS
+        var level = LevelHelper.makeLevel(cityArray), ol, count = 3, listener, levelElement;
         ol = doc.querySelector('ol');
+        levelElement  = doc.querySelector('.level');
+
         listener = function(e){
             var t = e.target;
             if(t.tagName.match(/li/i)) {
-                t.classList.remove('correct');
-                t.classList.remove('wrong');
-                t.innerHTML = '';
                 if(--count === 0) {
                     layDownLevel(level);
+                    levelElement.style.visibility = 'visible';
                     ol.removeEventListener(prefixer.ontransitionend, listener, true);
                 }
             }
@@ -141,8 +144,12 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(stor
         ol.addEventListener(prefixer.ontransitionend, listener, true);
 
         [].forEach.call(ol.children, function(li){
+            li.classList.remove('correct');
+            li.classList.remove('wrong');
             li.classList.remove('back');
         });
+
+        levelElement.style.visibility = 'hidden';
     };
 
     attachEventHandlers = function(){
@@ -165,7 +172,11 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(stor
                     result.classList.remove('wrong');
                     result.classList.add('correct');
                     result.innerHTML = text.correct;
-                    setTimeout(loadNextLevel, 2000);
+                    setTimeout(function(){
+                        levelNumber++;
+                        result.innerHTML = null;
+                        loadNextLevel();
+                    }, 2000);
                 }
                 else {
                     this.classList.add('wrong');
