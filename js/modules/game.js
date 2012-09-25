@@ -14,7 +14,7 @@
  * limitations under the License.
  */
  
-define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(store, nokiamaps, prefixer){
+define(['modules/store', 'modules/nokiamaps', 'modules/prefixer', 'modules/user'], function(store, nokiamaps, prefixer, User){
     'use strict';
 
     Array.prototype.randomElement = Array.prototype.randomElement || function(){
@@ -25,7 +25,7 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(stor
     };
 
     var doc = document,
-        init, locationFound, locationNotFound, cities, attachEventHandlers, loadNextLevel,
+        init, locationFound, locationNotFound, cities, attachEventHandlers, loadNextLevel, startGame,
         layDownLevel, overlay = doc.querySelector('.overlay'),
         answers,
         text = {
@@ -33,7 +33,7 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(stor
             wrong: 'Nope! Unfortunately you picked the wrong one. ' +
                    'That one is ${CITY}, and you can learn more about it ' +
                    '<a href="http://en.wikipedia.com/wiki/${W_CITY}" target="_blank">on Wikipedia</a>.'
-        }, cityArray, levelNumber = 1;
+        }, cityArray, levelNumber = 1, user = new User();
 
     var LevelHelper = {
         makeLevel: function(cities){
@@ -67,7 +67,6 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(stor
 
     init = function(){
         //app lives here
-        attachEventHandlers();
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(locationFound, locationNotFound);
         }
@@ -80,8 +79,26 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(stor
         var lat = position.coords.latitude,
             lon = position.coords.longitude;
 
+        attachEventHandlers(lat, lon);
+
+        user.done(function(){
+            var overlay = doc.querySelector('.overlay');
+            overlay.style.display = 'none';
+            overlay.children[0].style.display = 'none';
+            if(user.data.name && user.data.name !== 'unknown') {
+                doc.querySelector('form').style.display = 'none';
+                startGame(lat, lon);
+            }
+        });
+    };
+
+    startGame = function(lat, lon) {
+        doc.querySelector('form').style.display = 'none';
         store.done(function(cities){
             var level = LevelHelper.makeFirstLevel(cities, {lat: lat, lon: lon});
+            doc.querySelector('header').classList.add('collapsed');
+            doc.querySelector('.level').style.display = 'block';
+            doc.querySelector('ol').style.display = 'block';
             cityArray = cities;
             layDownLevel(level);
         });
@@ -152,7 +169,7 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(stor
         levelElement.style.visibility = 'hidden';
     };
 
-    attachEventHandlers = function(){
+    attachEventHandlers = function(lat, lon){
         [].forEach.call(doc.querySelectorAll('.error span'), function(e){
             e.addEventListener('click', function(){
                 this.parentNode.style.display = 'none';
@@ -187,6 +204,11 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer'], function(stor
                 }
             });
         });
+        doc.querySelector('form').addEventListener('submit', function(e){
+            e.preventDefault();
+            var name = this.querySelector('#name').value || 'Anonymous';
+            user.setName(name, startGame.bind(null, lat, lon));
+        }, false);
     };
 
     return {

@@ -20,11 +20,12 @@ define(['modules/cookies', 'firebase'], function(cookies){
     var User, U,
         _generateID;
 
-    User = function(name){
+    User = function(){
         this.id = _generateID();
         this.firebaseRef = new Firebase('http://gamma.firebase.com/mmarcon/findtilepro/users/' + this.id);
         this.attachEventHandlers();
         this.data = null;
+        this.callbacks = [];
     };
 
     U = User.prototype;
@@ -33,12 +34,20 @@ define(['modules/cookies', 'firebase'], function(cookies){
         var self = this;
         this.firebaseRef.on('value', function(snapshot){
             var remoteUser = snapshot.val();
-            if(!remoteUser || !remoteUser.name || !remoteUser.score) {
-                self.data = {score:0, name: 'anonymous'};
+            if(!remoteUser || !remoteUser.name || typeof remoteUser.score !== 'number') {
+                self.data = {score:0, name: 'unknown'};
                 self.firebaseRef.set(self.data);
+                self.callbacks.forEach(function(c){
+                    c.call(self);
+                });
+                self.callbacks.length = 0;
             }
             else {
                 self.data = remoteUser;
+                self.callbacks.forEach(function(c){
+                    c.call(self);
+                });
+                self.callbacks.length = 0;
             }
             console.log(self.toString());
         });
@@ -59,6 +68,15 @@ define(['modules/cookies', 'firebase'], function(cookies){
 
     U.toString = function(){
         return '[' + this.id + '] Name:' + (this.data && this.data.name) + ', Score:' + (this.data && this.data.score);
+    };
+
+    U.done = function(callback) {
+        if(this.data) {
+            callback.call(this);
+        }
+        else {
+            this.callbacks.push(callback);
+        }
     };
 
     _generateID = function(){

@@ -39,6 +39,11 @@
         <h3>Powered by <a href="http://api.maps.nokia.com" title="Nokia Maps API">Nokia Maps</a></h3>
     </header>
 
+    <form class="user-info">
+        <label for="name">Who are you?</label>
+        <input type="text" placeholder="Your Name" id="name" name="name"/>
+    </form>
+
     <section class="level">
         <p>Level <span class='level-number'>1</span>:</p>
         <p>What map tile corresponds to <span class="where">your current location</span>?</p>
@@ -67,6 +72,6 @@
         <p>Reloading is cheating....</p>
         <img src="img/reload.png" alt="Come on, quit reloading!"/>
     </div>
-    <div class="overlay"></div>    
+    <div class="overlay"><img src="img/loading.gif" class="loading" alt="Loading..." width="24" height="24"/></div>  
 </body>
 </html>

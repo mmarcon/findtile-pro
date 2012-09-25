@@ -16,8 +16,5 @@
 
 require(['modules/game'], function(game){
     'use strict';
-    //@TODO: don't forget to hide me later on...
-    //window.u = new User();
-
     game.init();
 });
