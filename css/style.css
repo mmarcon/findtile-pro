@@ -52,6 +52,8 @@ h2 {
     font-size: 30px;
     text-align: left;
     display: inline-block;
+    position: relative;
+    top: 2px;
 }
 
 .collapsed h2 {
@@ -290,4 +292,12 @@ input {
     font-weight: 100;
     font-size: 18px;
     color: #222;
+}
+
+.score {
+    position: absolute;
+    top: 20px;
+    right: 10px;
+    color: #ffd700;
+    font-size: 20px;
 }

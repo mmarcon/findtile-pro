@@ -31,26 +31,28 @@ define(['modules/cookies', 'firebase'], function(cookies){
     U = User.prototype;
 
     U.attachEventHandlers = function(){
-        var self = this;
-        this.firebaseRef.on('value', function(snapshot){
+        this.firebaseRef.on('value', (function(snapshot){
             var remoteUser = snapshot.val();
-            if(!remoteUser || !remoteUser.name || typeof remoteUser.score !== 'number') {
-                self.data = {score:0, name: 'unknown'};
-                self.firebaseRef.set(self.data);
-                self.callbacks.forEach(function(c){
-                    c.call(self);
+            if(!remoteUser || !remoteUser.name || typeof remoteUser.score !== 'number' || typeof remoteUser.maxscore !== 'number') {
+                this.data = {score:0, name: 'unknown', maxscore: 0};
+                this.firebaseRef.set(this.data);
+                this.callbacks.forEach(function(c){
+                    c.call(this);
                 });
-                self.callbacks.length = 0;
+                this.callbacks.length = 0;
             }
             else {
-                self.data = remoteUser;
-                self.callbacks.forEach(function(c){
-                    c.call(self);
+                this.data = remoteUser;
+                if(this.data.score > this.data.maxscore) {
+                    this.firebaseRef.child('maxscore').set(this.data.score);
+                }
+                this.callbacks.forEach(function(c){
+                    c.call(this);
                 });
-                self.callbacks.length = 0;
+                this.callbacks.length = 0;
             }
-            console.log(self.toString());
-        });
+            console.log(this.toString());
+        }).bind(this));
     };
 
     U.setName = function(name, callback){

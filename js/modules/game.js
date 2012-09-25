@@ -25,12 +25,12 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer', 'modules/user'
     };
 
     var doc = document,
-        init, locationFound, locationNotFound, cities, attachEventHandlers, loadNextLevel, startGame,
+        init, locationFound, locationNotFound, cities, attachEventHandlers, loadNextLevel, startGame, updateScore,
         layDownLevel, overlay = doc.querySelector('.overlay'),
         answers,
         text = {
             correct: 'Well done, that is indeed correct!',
-            wrong: 'Nope! Unfortunately you picked the wrong one. ' +
+            wrong: 'GAME OVER :( Unfortunately you picked the wrong tile. ' +
                    'That one is ${CITY}, and you can learn more about it ' +
                    '<a href="http://en.wikipedia.com/wiki/${W_CITY}" target="_blank">on Wikipedia</a>.'
         }, cityArray, levelNumber = 1, user = new User();
@@ -92,7 +92,13 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer', 'modules/user'
         });
     };
 
+    updateScore = function(to){
+        doc.querySelector('.score span').textContent = to+'';
+    };
+
     startGame = function(lat, lon) {
+        user.resetScore();
+        updateScore(0);
         doc.querySelector('form').style.display = 'none';
         store.done(function(cities){
             var level = LevelHelper.makeFirstLevel(cities, {lat: lat, lon: lon});
@@ -112,8 +118,8 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer', 'modules/user'
         rurl = URLMaker(level.t0);
         img.push(rurl);
         answers.correct = rurl;
-        doc.querySelector('.where').innerHTML = level.t0.city || 'your current location';
-        doc.querySelector('.level-number').innerHTML = levelNumber;
+        doc.querySelector('.where').textContent = level.t0.city ? decodeURIComponent(level.t0.city) : 'your current location';
+        doc.querySelector('.level-number').textContent = levelNumber;
         rurl = URLMaker(level.t1);
         img.push(rurl);
         answers[rurl] = level.t1;
@@ -189,6 +195,9 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer', 'modules/user'
                     result.classList.remove('wrong');
                     result.classList.add('correct');
                     result.innerHTML = text.correct;
+                    user.incrementScore(function(){
+                        updateScore(user.data.score);
+                    });
                     setTimeout(function(){
                         levelNumber++;
                         result.innerHTML = null;
@@ -201,6 +210,8 @@ define(['modules/store', 'modules/nokiamaps', 'modules/prefixer', 'modules/user'
                     result.classList.add('wrong');
                     result.innerHTML = text.wrong.replace('${CITY}', decodeURIComponent(answers[src].city))
                                                .replace('${W_CITY}', answers[src].wikipedia);
+                    user.resetScore();
+                    updateScore(0);
                 }
             });
         });
