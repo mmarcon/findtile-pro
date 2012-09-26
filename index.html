@@ -1,0 +1,78 @@
+<!--
+    Copyright 2012 Massimiliano Marcon (http://marcon.me)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Find your Tile</title>
+	<link rel="stylesheet" type="text/css" href="css/normalize.css" />
+	<link rel="stylesheet" type="text/css" href="css/style.css" />
+
+    <script src="js/require.js"></script>
+    <script>
+        window.PRODUCTION = true;
+
+        require.config({
+            baseUrl: './js',
+            paths: {
+                "firebase": "http://static.firebase.com/v0/firebase",
+                "main": (window.PRODUCTION ? "main-build" : undefined)
+            },
+        });
+        require(['main']);
+    </script>
+</head>
+
+<body>
+    <header>
+        <h1>Find the Tile</h1>
+        <h2>Can you match a map tile with a location? Prove it!</h2>
+        <h3>Powered by <a href="http://api.maps.nokia.com" title="Nokia Maps API">Nokia Maps</a></h3>
+    </header>
+
+    <form class="user-info">
+        <label for="name">Who are you?</label>
+        <input type="text" placeholder="Your Name" id="name" name="name"/>
+    </form>
+
+    <section class="level">
+        <p>Level <span class='level-number'>1</span>:</p>
+        <p>What map tile corresponds to <span class="where">your current location</span>?</p>
+    </section>
+    
+    <ol>
+        <li class="tile tile1"></li>
+        <li class="tile tile2"></li>
+        <li class="tile tile3"></li>
+    </ol>
+
+    <section class="result"></section>
+
+    <div class="error nolocation">
+        <span>x</span>
+        <p>Location could not be determined or your browser does not support this feature.</p>
+        <img src="img/info.png" alt="Location not supported."/>
+    </div>
+    <div class="error nodata">
+        <span>x</span>
+        <p>Error while retrieving data. Try again later.</p>
+        <img src="img/info.png" alt="Uhmm, something wrong"/>
+    </div>
+    <div class="overlay"><img src="img/loading.gif" class="loading" alt="Loading..." width="24" height="24"/></div>
+    <p class="score">Your score: <span></span></p>
+</body>
+</html>
