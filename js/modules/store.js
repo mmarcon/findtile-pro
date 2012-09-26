@@ -1,7 +1,7 @@
 define(function(){
     'use strict';
 
-    var done, data, callbacks = [], sync;
+    var done, data, callbacks = [], sync, w = window;
 
     done = function(callback){
         if(data) {
@@ -14,7 +14,7 @@ define(function(){
     };
 
     sync = function(){
-        var req = new XMLHttpRequest();
+        var req = new w.XMLHttpRequest();
         req.open('GET', 'data/cities.json', true);
         req.onreadystatechange = function (aEvt) {
             var city, rurl, el;
