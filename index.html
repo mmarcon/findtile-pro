@@ -22,14 +22,19 @@
 	<link rel="stylesheet" type="text/css" href="css/normalize.css" />
 	<link rel="stylesheet" type="text/css" href="css/style.css" />
 
+    <script src="js/require.js"></script>
     <script>
-        var require = {
+        window.PRODUCTION = false;
+
+        require.config({
+            baseUrl: './js',
             paths: {
-                firebase: 'http://static.firebase.com/v0/firebase'
-            }
-        };
+                "firebase": "http://static.firebase.com/v0/firebase",
+                "main": (window.PRODUCTION ? "main-build" : undefined)
+            },
+        });
+        require(['main']);
     </script>
-    <script data-main="js/main" src="js/require.js"></script>
 </head>
 
 <body>
